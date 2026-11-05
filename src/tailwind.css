@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Font (self-hosted, no CDN) ---------- */
+@font-face {
+    font-family: 'Public Sans';
+    src: url('/vendor/fonts/public-sans-latin-wght-normal.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ---------- Tokens ---------- */
+@layer base {
+    :root {
+        --ground: #ffffff;      /* page */
+        --panel: #f2f5f9;       /* tonal panel, one step off white toward clinical blue-grey */
+        --panel-2: #e8edf4;     /* one step darker: row cards' edge, active states */
+        --surface: #ffffff;     /* inner card, used once per screen for the main chart */
+        --border: #e2e8f0;
+        --rule: #e9eef4;
+        --control: #cbd5e1;
+        --text: #111827;
+        --muted: #4b5563;
+        --faint: #5f6b7a;
+        --brand: #1e3a8a;       /* the theme blue: top bar, mark, primary action */
+        --brand-hover: #18306f;
+        --accent: #1d5fbf;      /* data hue */
+        --accent-soft: #e0e9f8;
+        --positive: #247b50;  --pill-positive-bg: #dcfae5;  --pill-positive-ink: #04250e;
+        --negative: #c4242a;  --pill-negative-bg: #ffedea;  --pill-negative-ink: #831c1e;
+        --pill-warning-bg: #fffbeb; --pill-warning-ink: #92400e; --warning-edge: #fde68a;
+        --sos: #d22b2b;
+        --radius-panel: 16px; --radius-control: 10px;
+        --font: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    html { -webkit-text-size-adjust: 100%; }
+    body { font-family: var(--font); color: var(--text); background: var(--ground); font-size: 14px; line-height: 20px; }
+    h1, h2, h3, h4 { color: var(--text); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    ::selection { background: var(--accent-soft); }
+    input, select, textarea, button { font: inherit; }
+}
+
+/* ---------- Components ---------- */
+@layer components {
+    .container-app { width: 100%; max-width: 1132px; margin: 0 auto; padding: 0 16px; }
+    .grid-12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+
+    .page-title { font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.01em; }
+    .page-sub { font-size: 14px; line-height: 20px; color: var(--muted); margin-top: 4px; }
+    .greeting { font-size: 28px; line-height: 36px; font-weight: 500; letter-spacing: -0.02em; }
+
+    .panel { background: var(--panel); border-radius: var(--radius-panel); padding: 20px; }
+    .panel-white { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-panel); padding: 20px; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; min-height: 28px; }
+    .panel-title { font-size: 16px; line-height: 24px; font-weight: 600; }
+    .panel-link { font-size: 14px; color: var(--accent); font-weight: 500; white-space: nowrap; }
+    .panel-link:hover { text-decoration: underline; }
+    .row-card { background: #f8fafc; border: 1px solid var(--panel-2); border-radius: 12px; padding: 12px 14px; }
+
+    .label { display: block; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .hint { font-size: 12px; line-height: 16px; color: var(--faint); margin-top: 4px; }
+    .meta { font-size: 12px; line-height: 16px; color: var(--faint); }
+    .muted { color: var(--muted); }
+    .field {
+        width: 100%; height: 42px; padding: 0 12px; background: #fff; color: var(--text);
+        border: 1px solid var(--control); border-radius: var(--radius-control); outline: none;
+        transition: border-color .15s, box-shadow .15s;
+    }
+    textarea.field { height: auto; padding: 10px 12px; line-height: 22px; resize: vertical; }
+    .field::placeholder { color: var(--faint); }
+    .field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); } /* taste-skill-ignore: focus ring */
+
+    .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        height: 40px; padding: 0 18px; border-radius: 999px; font-weight: 600; font-size: 14px;
+        white-space: nowrap; transition: background-color .15s, color .15s, transform .08s; cursor: pointer;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: .7; cursor: not-allowed; }
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-primary:hover { background: var(--brand-hover); }
+    .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--control); }
+    .btn-secondary:hover { background: var(--panel); }
+    .btn-quiet { background: var(--panel-2); color: var(--text); }
+    .btn-quiet:hover { background: #dde4ee; }
+    .btn-danger { background: var(--sos); color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-text { height: auto; padding: 0; border-radius: 4px; color: var(--accent); font-weight: 500; }
+    .btn-text:hover { text-decoration: underline; }
+    .btn-sm { height: 32px; padding: 0 12px; font-size: 13px; }
+    .btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 999px; color: var(--faint); }
+    .btn-icon:hover { background: var(--panel-2); color: var(--text); }
+
+    .chip { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; flex: none; background: var(--panel-2); color: var(--muted); }
+    .chip-pos { background: var(--pill-positive-bg); color: var(--pill-positive-ink); }
+    .chip-neg { background: var(--pill-negative-bg); color: var(--pill-negative-ink); }
+    .chip-warn { background: var(--pill-warning-bg); color: var(--pill-warning-ink); }
+    .chip-info { background: var(--accent-soft); color: #1e3a8a; }
+
+    .kpi-label { font-size: 14px; color: var(--muted); }
+    .kpi-value { font-size: 24px; line-height: 32px; font-weight: 400; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+    .kpi-unit { font-size: 14px; color: var(--faint); margin-left: 2px; }
+    .num { font-variant-numeric: tabular-nums; }
+
+    .seg { display: inline-flex; background: var(--panel-2); border-radius: 999px; padding: 3px; gap: 2px; }
+    .seg button { height: 32px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--muted); }
+    .seg button[aria-pressed="true"] { background: #fff; color: var(--text); }
+
+    .notice { border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 20px; display: flex; gap: 10px; align-items: flex-start; }
+    .notice-warn { background: var(--pill-warning-bg); color: var(--pill-warning-ink); border: 1px solid var(--warning-edge); }
+    .notice-neg { background: var(--pill-negative-bg); color: var(--pill-negative-ink); }
+    .notice-info { background: var(--accent-soft); color: #1e3a8a; }
+    .notice-pos { background: var(--pill-positive-bg); color: var(--pill-positive-ink); }
+
+    .empty { border: 1px dashed var(--control); border-radius: 12px; padding: 14px; color: var(--muted); font-size: 14px; text-align: center; }
+
+    .list-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--rule); }
+    .list-row:first-child { border-top: 0; }
+}

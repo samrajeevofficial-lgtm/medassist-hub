@@ -1,0 +1,23 @@
+{
+    "name": "MedAssist Hub",
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+    "forwardPorts": [3000],
+    "portsAttributes": {
+        "3000": {
+            "label": "MedAssist Hub",
+            "onAutoForward": "openBrowser"
+        }
+    },
+    "postCreateCommand": "npm install && node scripts/setup-env.js && npm run seed",
+    "secrets": {
+        "GEMINI_API_KEY": {
+            "description": "Optional. Free Google Gemini key for AI symptom analysis.",
+            "documentationUrl": "https://aistudio.google.com/apikey"
+        }
+    },
+    "customizations": {
+        "codespaces": {
+            "openFiles": ["README.md"]
+        }
+    }
+}

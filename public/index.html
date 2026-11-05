@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>MedAssist Hub</title>
+    <meta name="description" content="Personal health assistant: medicines, vitals, appointments, symptom checks and nearby hospitals.">
+    <meta name="theme-color" content="#1e3a8a">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%231e3a8a'/%3E%3Cpath d='M13 8h6v5h5v6h-5v5h-6v-5H8v-6h5z' fill='%23fff'/%3E%3C/svg%3E">
+    <link rel="preload" href="/vendor/fonts/public-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/css/tailwind.css">
+    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/vendor/leaflet/leaflet.js" defer></script>
+    <script src="/vendor/chart.umd.js" defer></script>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to content</a>
+
+    <!-- Top bar: the brand's deep blue -->
+    <header class="topbar no-print">
+        <div class="topbar-inner">
+            <button onclick="switchTab('dashboard')" class="brand" aria-label="MedAssist Hub home">
+                <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#ffffff"/><path d="M13 8h6v5h5v6h-5v5h-6v-5H8v-6h5z" fill="#1e3a8a"/></svg>
+                <span class="brand-name">MedAssist Hub</span>
+            </button>
+
+            <nav class="topnav" aria-label="Main">
+                <button onclick="switchTab('dashboard')" data-tab="dashboard" class="nav-btn">Home</button>
+                <button onclick="switchTab('triage')" data-tab="triage" class="nav-btn">Symptoms</button>
+                <button onclick="switchTab('tracker')" data-tab="tracker" class="nav-btn">Medicines</button>
+                <button onclick="switchTab('vitals')" data-tab="vitals" class="nav-btn">Vitals</button>
+                <button onclick="switchTab('appointments')" data-tab="appointments" class="nav-btn">Appointments</button>
+                <button onclick="switchTab('locator')" data-tab="locator" class="nav-btn">Hospitals</button>
+                <button onclick="switchTab('info')" data-tab="info" class="nav-btn">First aid</button>
+            </nav>
+
+            <div class="topbar-actions">
+                <button onclick="openSOS()" class="sos-btn" aria-label="Emergency SOS">SOS</button>
+                <button onclick="onUserButton()" class="user-btn" aria-label="Log in">
+                    <span class="user-initial" aria-hidden="true"></span><span class="user-label">Log in</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main" class="container-app app-main">
+
+        <!-- ============ Home ============ -->
+        <section id="dashboard" class="tab-content" aria-labelledby="dash-title">
+            <!-- Guest -->
+            <div id="dash-guest">
+                <div class="grid-12 items-center gap-y-10 pt-4 lg:pt-10">
+                    <div class="col-span-12 lg:col-span-6">
+                        <h1 class="guest-title screen-title">Your medicines, numbers and doctors in one place</h1>
+                        <p class="text-[16px] leading-[26px] muted mt-4 max-w-[34rem]">MedAssist Hub reminds you when a dose is due, shows whether your blood pressure and sugar are improving, checks how urgent a symptom is, and finds the nearest hospital when it matters.</p>
+                        <div class="flex flex-wrap gap-3 mt-7">
+                            <button onclick="demoLogin(this)" class="btn btn-primary">Explore the demo account</button>
+                            <button onclick="openAuth('register')" class="btn btn-secondary">Create a free account</button>
+                        </div>
+                        <p class="meta mt-4">No account needed for symptom checks, hospitals and first aid.</p>
+                    </div>
+                    <div class="col-span-12 lg:col-span-6">
+                        <div class="panel" data-ui id="guest-preview"></div>
+                    </div>
+                </div>
+                <div class="grid-12 mt-12 lg:mt-16 pb-6" id="guest-features"></div>
+            </div>
+
+            <!-- Logged in -->
+            <div id="dash-user" class="hidden">
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pt-2">
+                    <div class="min-w-0">
+                        <h1 id="dash-title" class="greeting screen-title">Good morning</h1>
+                        <p id="dash-sub" class="text-[16px] leading-[24px] muted mt-2"></p>
+                    </div>
+                    <div class="flex gap-2 shrink-0">
+                        <button onclick="switchTab('vitals')" class="btn btn-secondary">Log a reading</button>
+                        <button onclick="switchTab('triage')" class="btn btn-primary">Check a symptom</button>
+                    </div>
+                </div>
+
+                <div id="dash-kpis" class="grid-12 mt-8"></div>
+
+                <div class="grid-12 mt-4">
+                    <div class="col-span-12 lg:col-span-9 panel">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Today's medicines</h2>
+                            <button onclick="switchTab('tracker')" class="panel-link">Open medicines</button>
+                        </div>
+                        <div id="dash-strip"></div>
+                        <div id="dash-doses" class="mt-4"></div>
+                    </div>
+                    <div class="col-span-12 lg:col-span-3 panel flex flex-col">
+                        <div class="panel-head"><h2 class="panel-title">Needs attention</h2></div>
+                        <div id="dash-alerts" class="space-y-2"></div>
+                        <h3 class="text-[14px] font-semibold mt-5 mb-1">At a glance</h3>
+                        <dl id="dash-glance" class="ref-list"></dl>
+                    </div>
+                </div>
+
+                <div class="grid-12 mt-4 pb-4">
+                    <div class="col-span-12 lg:col-span-6 panel">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Blood pressure, 60 days</h2>
+                            <button onclick="switchTab('vitals')" class="panel-link">All vitals</button>
+                        </div>
+                        <div class="panel-white !p-4">
+                            <div id="dash-bp-note" class="text-[14px] muted mb-2"></div>
+                            <div class="relative h-[190px]"><canvas id="dash-bp-chart" aria-label="Blood pressure trend chart" role="img"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="col-span-12 lg:col-span-6 panel">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Upcoming appointments <span id="dash-appt-count" class="chip ml-1">0</span></h2>
+                            <button onclick="switchTab('appointments')" class="panel-link">View all</button>
+                        </div>
+                        <div id="dash-appts" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ Symptom triage ============ -->
+        <section id="triage" class="tab-content">
+            <div class="title-row">
+                <div>
+                    <h1 class="page-title screen-title">Symptom check</h1>
+                    <p class="page-sub">How urgent is it, and what can you do now? General guidance, not a diagnosis.</p>
+                </div>
+                <span id="ai-badge" class="chip chip-info hidden">AI-assisted</span>
+            </div>
+
+            <div class="grid-12 mt-6 items-start">
+                <div class="col-span-12 lg:col-span-8 space-y-4">
+                    <form class="panel" onsubmit="event.preventDefault(); analyzeSymptoms();">
+                        <label for="symptoms-input" class="label">Describe how you feel</label>
+                        <textarea id="symptoms-input" rows="4" maxlength="2000" class="field" placeholder="e.g. I've had a fever and headache since yesterday"></textarea>
+                        <div class="mt-3">
+                            <p class="meta mb-2">Tap to add a common symptom</p>
+                            <div id="symptom-chips" class="flex flex-wrap gap-2"></div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+                            <div>
+                                <label for="triage-duration" class="label">How long?</label>
+                                <select id="triage-duration" class="field">
+                                    <option value="">Not sure</option>
+                                    <option value="0">Started today</option>
+                                    <option value="2">1–3 days</option>
+                                    <option value="5">4–7 days</option>
+                                    <option value="10">1–2 weeks</option>
+                                    <option value="21">More than 2 weeks</option>
+                                </select>
+                            </div>
+                            <div class="guest-only">
+                                <label for="triage-age" class="label">Age</label>
+                                <input type="number" id="triage-age" min="0" max="120" inputmode="numeric" class="field" placeholder="Optional">
+                            </div>
+                            <div class="guest-only">
+                                <label for="triage-sex" class="label">Sex</label>
+                                <select id="triage-sex" class="field">
+                                    <option value="">Prefer not to say</option>
+                                    <option value="female">Female</option>
+                                    <option value="male">Male</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <p class="user-only hidden sm:col-span-2 self-end text-[14px] muted pb-2">Your age, allergies, conditions and current medicines are taken into account.</p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-4 mt-5">
+                            <button type="submit" id="analyze-btn" class="btn btn-primary">Check symptoms</button>
+                            <label id="ai-toggle-wrap" class="hidden items-center gap-2 text-[14px] muted cursor-pointer">
+                                <input type="checkbox" id="ai-toggle" checked class="h-4 w-4 accent-blue-700"> Include AI analysis
+                            </label>
+                        </div>
+                    </form>
+
+                    <div id="triage-results" class="hidden space-y-4" aria-live="polite">
+                        <div id="results-container" class="space-y-4"></div>
+                    </div>
+                </div>
+
+                <aside class="col-span-12 lg:col-span-4 space-y-4">
+                    <div class="panel">
+                        <h2 class="panel-title mb-2">Call <span class="emergency-number">112</span> straight away for</h2>
+                        <ul class="danger-list">
+                            <li>Chest pain or pressure, especially spreading to the arm or jaw</li>
+                            <li>Trouble breathing, or blue lips</li>
+                            <li>Face drooping, arm weakness or slurred speech</li>
+                            <li>Fainting, a seizure, or heavy bleeding</li>
+                            <li>Swelling of the lips, tongue or throat</li>
+                        </ul>
+                        <a href="tel:112" class="btn btn-danger w-full mt-4 emergency-call">Call <span class="emergency-number">112</span></a>
+                    </div>
+                    <div id="triage-history-card" class="panel hidden">
+                        <div class="panel-head"><h2 class="panel-title">Your recent checks</h2></div>
+                        <div id="triage-history" class="space-y-1"></div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <!-- ============ Medicines ============ -->
+        <section id="tracker" class="tab-content">
+            <div class="auth-gate"></div>
+            <div class="auth-content hidden">
+                <div class="title-row">
+                    <div>
+                        <h1 class="page-title screen-title">Medicines</h1>
+                        <p class="page-sub" id="tracker-sub">Your schedule, stock and how regularly you take them.</p>
+                    </div>
+                    <button onclick="focusMedForm()" class="btn btn-primary">Add medicine</button>
+                </div>
+
+                <div class="grid-12 mt-6 items-start">
+                    <div class="col-span-12 lg:col-span-8 space-y-4">
+                        <div class="panel">
+                            <div class="panel-head">
+                                <h2 class="panel-title">Schedule</h2>
+                                <div class="seg" role="group" aria-label="Choose day">
+                                    <button onclick="shiftScheduleDay(-1)" aria-label="Previous day">‹</button>
+                                    <button onclick="shiftScheduleDay(0)" id="schedule-date-label" aria-pressed="true">Today</button>
+                                    <button onclick="shiftScheduleDay(1)" aria-label="Next day">›</button>
+                                </div>
+                            </div>
+                            <div id="schedule-strip"></div>
+                            <div id="schedule-list" class="space-y-2 mt-4"></div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-head">
+                                <h2 class="panel-title">Your prescriptions <span class="chip ml-1 num" id="med-count">0</span></h2>
+                                <button onclick="checkMyInteractions()" class="panel-link">Check interactions</button>
+                            </div>
+                            <div id="med-list-container" class="space-y-2"></div>
+                        </div>
+                    </div>
+
+                    <aside class="col-span-12 lg:col-span-4 space-y-4">
+                        <div class="panel" id="med-form-panel">
+                            <h2 class="panel-title mb-4" id="med-form-title">Add a medicine</h2>
+                            <form id="med-form" onsubmit="saveMedication(event)" class="space-y-4">
+                                <input type="hidden" id="med-id">
+                                <div>
+                                    <label for="med-name" class="label">Name</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="med-name" required maxlength="100" class="field" placeholder="e.g. Metformin">
+                                        <button type="button" onclick="showDrugInfo(document.getElementById('med-name').value)" class="btn btn-quiet shrink-0 !px-3" aria-label="Look up this medicine">Info</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="med-dosage" class="label">Dose</label>
+                                    <input type="text" id="med-dosage" required maxlength="60" class="field" placeholder="e.g. 500mg, 1 tablet">
+                                </div>
+                                <div>
+                                    <span class="label">Reminder times</span>
+                                    <div id="med-times" class="space-y-2"></div>
+                                    <button type="button" onclick="addTimeInput()" class="btn-text btn text-[14px] mt-2">Add another time</button>
+                                </div>
+                                <div>
+                                    <label for="med-instructions" class="label">Instructions</label>
+                                    <select id="med-instructions" class="field">
+                                        <option value="">None</option>
+                                        <option>Before food</option>
+                                        <option>After food</option>
+                                        <option>With food</option>
+                                        <option>Empty stomach</option>
+                                        <option>At bedtime</option>
+                                    </select>
+                                </div>
+                                <details class="disclosure">
+                                    <summary>Course dates and pill stock</summary>
+                                    <div class="space-y-3 mt-3">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div><label for="med-start" class="label">Start</label><input type="date" id="med-start" class="field !px-2"></div>
+                                            <div><label for="med-end" class="label">End</label><input type="date" id="med-end" class="field !px-2"></div>
+                                        </div>
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <div><label for="med-stock" class="label">In stock</label><input type="number" id="med-stock" min="0" inputmode="numeric" class="field !px-2" placeholder="30"></div>
+                                            <div><label for="med-perdose" class="label">Per dose</label><input type="number" id="med-perdose" min="1" value="1" inputmode="numeric" class="field !px-2"></div>
+                                            <div><label for="med-threshold" class="label">Alert at</label><input type="number" id="med-threshold" min="0" value="5" inputmode="numeric" class="field !px-2"></div>
+                                        </div>
+                                    </div>
+                                </details>
+                                <div class="flex gap-2">
+                                    <button type="submit" id="med-submit" class="btn btn-primary flex-1">Add to schedule</button>
+                                    <button type="button" id="med-cancel" onclick="resetMedForm()" class="btn btn-secondary hidden">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-head">
+                                <h2 class="panel-title">Taken on time</h2>
+                                <select id="adherence-days" onchange="loadAdherence()" class="field !h-8 !w-auto !text-[13px] !rounded-full" aria-label="Period">
+                                    <option value="7">7 days</option>
+                                    <option value="14">14 days</option>
+                                    <option value="30" selected>30 days</option>
+                                </select>
+                            </div>
+                            <div id="adherence-box"></div>
+                        </div>
+
+                        <div class="panel" id="notif-card">
+                            <h2 class="panel-title mb-1">Dose reminders</h2>
+                            <p class="text-[14px] muted mb-3">A pop-up when a dose is due, while MedAssist is open in a tab.</p>
+                            <button onclick="enableNotifications()" class="btn btn-secondary w-full">Turn on reminders</button>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ Vitals ============ -->
+        <section id="vitals" class="tab-content">
+            <div class="auth-gate"></div>
+            <div class="auth-content hidden">
+                <div class="title-row">
+                    <div>
+                        <h1 class="page-title screen-title">Vitals</h1>
+                        <p class="page-sub" id="vitals-sub">Your latest readings and how they've changed.</p>
+                    </div>
+                </div>
+
+                <div id="vitals-summary" class="kpi-strip mt-6"></div>
+
+                <div class="grid-12 mt-4 balance-row">
+                    <div class="col-span-12 lg:col-span-8 col-flex">
+                        <div class="panel">
+                            <div class="panel-head flex-wrap">
+                                <h2 class="panel-title" id="chart-title">Trend</h2>
+                                <div class="flex gap-2">
+                                    <select id="chart-type" onchange="loadVitalsChart()" class="field !h-8 !w-auto !text-[13px] !rounded-full" aria-label="Reading type">
+                                        <option value="blood_pressure">Blood pressure</option>
+                                        <option value="blood_sugar">Blood sugar</option>
+                                        <option value="heart_rate">Heart rate</option>
+                                        <option value="weight">Weight</option>
+                                        <option value="temperature">Temperature</option>
+                                        <option value="spo2">Oxygen (SpO₂)</option>
+                                    </select>
+                                    <select id="chart-days" onchange="loadVitalsChart()" class="field !h-8 !w-auto !text-[13px] !rounded-full" aria-label="Period">
+                                        <option value="7">7 days</option>
+                                        <option value="30">30 days</option>
+                                        <option value="90" selected>90 days</option>
+                                        <option value="365">1 year</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="panel-white !p-4">
+                                <p id="chart-note" class="text-[14px] muted mb-2"></p>
+                                <div class="relative h-[240px]" id="chart-wrap"><canvas id="vitals-chart" role="img" aria-label="Vitals trend chart"></canvas></div>
+                                <p id="chart-empty" class="hidden empty">No readings in this period yet.</p>
+                            </div>
+                        </div>
+                        <div class="panel fill-rest">
+                            <div class="panel-head"><h2 class="panel-title">History</h2><span id="history-count" class="meta"></span></div>
+                            <div id="vitals-history" class="fill-list overflow-y-auto custom-scroll pr-1"></div>
+                        </div>
+                    </div>
+
+                    <aside class="col-span-12 lg:col-span-4 col-flex">
+                        <div class="panel">
+                            <h2 class="panel-title mb-4">Log a reading</h2>
+                            <form id="vital-form" onsubmit="saveVital(event)" class="space-y-4">
+                                <div>
+                                    <label for="vital-type" class="label">Type</label>
+                                    <select id="vital-type" onchange="onVitalTypeChange()" class="field">
+                                        <option value="blood_pressure">Blood pressure</option>
+                                        <option value="blood_sugar">Blood sugar</option>
+                                        <option value="heart_rate">Heart rate</option>
+                                        <option value="weight">Weight</option>
+                                        <option value="temperature">Temperature</option>
+                                        <option value="spo2">Oxygen (SpO₂)</option>
+                                    </select>
+                                </div>
+                                <div id="vital-fields"></div>
+                                <div>
+                                    <label for="vital-when" class="label">When</label>
+                                    <input type="datetime-local" id="vital-when" required class="field">
+                                </div>
+                                <div>
+                                    <label for="vital-note" class="label">Note</label>
+                                    <input type="text" id="vital-note" maxlength="300" class="field" placeholder="Optional, e.g. after a walk">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-full">Save reading</button>
+                            </form>
+                        </div>
+                        <div class="panel">
+                            <h2 class="panel-title mb-2">What the labels mean</h2>
+                            <dl class="ref-list">
+                                <div><dt>Blood pressure</dt><dd class="num">Normal under 120/80 · high from 130/80</dd></div>
+                                <div><dt>Fasting sugar</dt><dd class="num">Normal 70–99 · raised 100–125 mg/dL</dd></div>
+                                <div><dt>After a meal</dt><dd class="num">Under 140 mg/dL</dd></div>
+                                <div><dt>Resting heart rate</dt><dd class="num">60–100 bpm</dd></div>
+                                <div><dt>Oxygen</dt><dd class="num">95% or more</dd></div>
+                            </dl>
+                            <p class="meta mt-3">General adult ranges. Your doctor may set different targets for you.</p>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ Appointments ============ -->
+        <section id="appointments" class="tab-content">
+            <div class="auth-gate"></div>
+            <div class="auth-content hidden">
+                <div class="title-row">
+                    <div>
+                        <h1 class="page-title screen-title">Appointments</h1>
+                        <p class="page-sub" id="appt-sub">Doctor visits, with reminders and calendar links.</p>
+                    </div>
+                    <button onclick="focusApptForm()" class="btn btn-primary">New appointment</button>
+                </div>
+                <div class="grid-12 mt-6 balance-row">
+                    <div class="col-span-12 lg:col-span-8 col-flex">
+                        <div class="panel">
+                            <div class="panel-head"><h2 class="panel-title">Upcoming <span class="chip ml-1 num" id="appt-count">0</span></h2></div>
+                            <div id="appt-upcoming" class="space-y-2"></div>
+                        </div>
+                        <div class="panel fill-rest">
+                            <div class="panel-head"><h2 class="panel-title">Past</h2></div>
+                            <div id="appt-past" class="space-y-2 fill-list overflow-y-auto custom-scroll pr-1"></div>
+                        </div>
+                    </div>
+                    <aside class="col-span-12 lg:col-span-4 col-flex">
+                        <div class="panel" id="appt-form-panel">
+                            <h2 class="panel-title mb-4" id="appt-form-title">New appointment</h2>
+                            <form id="appt-form" onsubmit="saveAppointment(event)" class="space-y-4">
+                                <input type="hidden" id="appt-id">
+                                <div><label for="appt-doctor" class="label">Doctor</label><input type="text" id="appt-doctor" required maxlength="100" class="field" placeholder="e.g. Dr. Sharma"></div>
+                                <div>
+                                    <label for="appt-specialty" class="label">Specialty</label>
+                                    <input type="text" id="appt-specialty" list="specialties" maxlength="60" class="field" placeholder="e.g. Cardiologist">
+                                    <datalist id="specialties">
+                                        <option>General Physician</option><option>Cardiologist</option><option>Diabetologist</option><option>Dermatologist</option><option>ENT Specialist</option>
+                                        <option>Gynaecologist</option><option>Neurologist</option><option>Orthopaedic</option><option>Paediatrician</option>
+                                        <option>Psychiatrist</option><option>Dentist</option><option>Ophthalmologist</option><option>Endocrinologist</option>
+                                    </datalist>
+                                </div>
+                                <div><label for="appt-datetime" class="label">Date and time</label><input type="datetime-local" id="appt-datetime" required class="field"></div>
+                                <div><label for="appt-location" class="label">Hospital or clinic</label><input type="text" id="appt-location" maxlength="200" class="field" placeholder="e.g. City Hospital, 2nd floor"></div>
+                                <div><label for="appt-reason" class="label">Reason</label><input type="text" id="appt-reason" maxlength="300" class="field" placeholder="e.g. BP follow-up"></div>
+                                <div><label for="appt-notes" class="label">Questions to ask</label><textarea id="appt-notes" rows="3" maxlength="2000" class="field"></textarea></div>
+                                <div class="flex gap-2">
+                                    <button type="submit" id="appt-submit" class="btn btn-primary flex-1">Save appointment</button>
+                                    <button type="button" id="appt-cancel" onclick="resetApptForm()" class="btn btn-secondary hidden">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="panel">
+                            <h2 class="panel-title mb-1">Before your visit</h2>
+                            <ul class="check-list text-[14px] leading-[21px]">
+                                <li>Your Medical ID, with allergies and current medicines</li>
+                                <li>Recent lab reports and prescriptions</li>
+                                <li>Your blood pressure and sugar readings from Vitals</li>
+                                <li>The questions you noted for this doctor</li>
+                            </ul>
+                            <button onclick="showMedicalId()" class="btn btn-secondary w-full mt-4">Open Medical ID</button>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ Hospitals ============ -->
+        <section id="locator" class="tab-content">
+            <div class="title-row">
+                <div>
+                    <h1 class="page-title screen-title">Nearby hospitals</h1>
+                    <p class="page-sub">Hospitals, clinics and pharmacies around you, with directions and phone numbers.</p>
+                </div>
+            </div>
+
+            <div class="panel mt-6">
+                <div class="flex flex-col lg:flex-row lg:items-end gap-4">
+                    <div class="flex-1">
+                        <span class="label">Show</span>
+                        <div class="flex flex-wrap gap-2" id="place-filters">
+                            <label class="filter-chip"><input type="checkbox" value="hospital" checked> Hospitals</label>
+                            <label class="filter-chip"><input type="checkbox" value="clinic" checked> Clinics</label>
+                            <label class="filter-chip"><input type="checkbox" value="pharmacy"> Pharmacies</label>
+                            <select id="place-radius" class="field !h-9 !w-auto !rounded-full" aria-label="Distance">
+                                <option value="2000">Within 2 km</option>
+                                <option value="5000" selected>Within 5 km</option>
+                                <option value="10000">Within 10 km</option>
+                                <option value="20000">Within 20 km</option>
+                            </select>
+                        </div>
+                    </div>
+                    <form onsubmit="searchArea(event)" class="flex gap-2 lg:w-[380px]">
+                        <label for="area-input" class="sr-only">Search an area</label>
+                        <input type="text" id="area-input" maxlength="150" class="field" placeholder="Or type an area, e.g. Jayanagar">
+                        <button type="submit" class="btn btn-secondary">Search</button>
+                    </form>
+                    <button onclick="findHospitals()" id="locate-btn" class="btn btn-primary lg:w-auto">Use my location</button>
+                </div>
+                <p id="locate-status" class="text-[14px] muted mt-3 min-h-[20px]" aria-live="polite"></p>
+            </div>
+
+            <div id="locator-empty" class="grid-12 mt-4">
+                <div class="col-span-12 panel locator-intro">
+                    <svg viewBox="0 0 400 160" class="w-full max-w-[520px] mx-auto block" aria-hidden="true">
+                        <rect x="0" y="0" width="400" height="160" rx="14" fill="#e8edf4"/>
+                        <path d="M0 110 C80 90 120 130 200 100 S320 60 400 80" stroke="#fff" stroke-width="10" fill="none"/>
+                        <path d="M150 0 L170 160" stroke="#fff" stroke-width="8"/>
+                        <path d="M260 0 L240 160" stroke="#fff" stroke-width="6"/>
+                        <circle cx="200" cy="96" r="9" fill="#1d5fbf"/><circle cx="200" cy="96" r="20" fill="#1d5fbf" opacity=".15"/>
+                        <g fill="#c4242a"><rect x="96" y="52" width="16" height="16" rx="4"/><rect x="292" y="40" width="16" height="16" rx="4"/><rect x="250" y="112" width="16" height="16" rx="4"/></g>
+                        <g fill="#fff"><path d="M102 55h4v4h4v4h-4v4h-4v-4h-4v-4h4z"/><path d="M298 43h4v4h4v4h-4v4h-4v-4h-4v-4h4z"/><path d="M256 115h4v4h4v4h-4v4h-4v-4h-4v-4h4z"/></g>
+                    </svg>
+                    <p class="text-center muted text-[14px] mt-4">Tap <strong class="text-[color:var(--text)]">Use my location</strong> or search an area to see places on the map.</p>
+                </div>
+            </div>
+
+            <div id="locator-results" class="hidden mt-4">
+                <div class="seg lg:hidden mb-3" role="group" aria-label="View">
+                    <button onclick="setLocatorView('list')" data-view="list" aria-pressed="true">List</button>
+                    <button onclick="setLocatorView('map')" data-view="map" aria-pressed="false">Map</button>
+                </div>
+                <div class="grid-12 items-start">
+                    <div class="col-span-12 lg:col-span-7 panel !p-2 locator-map-pane">
+                        <div id="map" class="w-full h-[440px] lg:h-[600px] rounded-[12px] z-0"></div>
+                    </div>
+                    <div class="col-span-12 lg:col-span-5 panel locator-list-pane">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Nearest first</h2>
+                            <label class="text-[13px] muted flex items-center gap-2"><input type="checkbox" id="emergency-only" onchange="renderPlaces()" class="h-4 w-4 accent-red-600"> Emergency or 24×7</label>
+                        </div>
+                        <div id="places-list" class="space-y-2 lg:max-h-[530px] overflow-y-auto custom-scroll pr-1"></div>
+                        <p class="meta mt-3">Map data © OpenStreetMap contributors. Details can be incomplete; call ahead when you can.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ First aid ============ -->
+        <section id="info" class="tab-content">
+            <div class="title-row">
+                <div>
+                    <h1 class="page-title screen-title">First aid</h1>
+                    <p class="page-sub">Step-by-step help for common emergencies while help is on the way.</p>
+                </div>
+                <div class="w-full md:w-[320px]">
+                    <label for="info-search" class="sr-only">Search first aid</label>
+                    <input type="search" id="info-search" oninput="filterInfo()" class="field" placeholder="Search, e.g. burn, snake, choking">
+                </div>
+            </div>
+            <div id="emergency-banner" class="emergency-strip mt-6"></div>
+            <div id="info-categories" class="flex flex-wrap gap-2 mt-4" role="group" aria-label="Category"></div>
+            <div id="info-grid" class="guide-columns mt-4 pb-4"></div>
+        </section>
+
+        <!-- ============ Profile ============ -->
+        <section id="profile" class="tab-content">
+            <div class="auth-gate"></div>
+            <div class="auth-content hidden">
+                <div class="title-row">
+                    <div>
+                        <h1 class="page-title screen-title">Profile</h1>
+                        <p class="page-sub" id="account-email"></p>
+                    </div>
+                    <button onclick="showMedicalId()" class="btn btn-primary">Medical ID</button>
+                </div>
+
+                <form id="profile-form" onsubmit="saveProfile(event)">
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <h2>Personal details</h2>
+                            <p>Used for age-aware symptom checks and your Medical ID.</p>
+                            <p id="pf-bmi" class="settings-summary"></p>
+                        </div>
+                        <div class="panel settings-panel">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div><label for="pf-name" class="label">Full name</label><input type="text" id="pf-name" maxlength="80" class="field"></div>
+                                <div><label for="pf-dob" class="label">Date of birth</label><input type="date" id="pf-dob" class="field"></div>
+                                <div>
+                                    <label for="pf-gender" class="label">Gender</label>
+                                    <select id="pf-gender" class="field"><option value="">—</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option><option value="prefer_not_to_say">Prefer not to say</option></select>
+                                </div>
+                                <div>
+                                    <label for="pf-blood" class="label">Blood group</label>
+                                    <select id="pf-blood" class="field"><option value="">—</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select>
+                                </div>
+                                <div><label for="pf-height" class="label">Height (cm)</label><input type="number" id="pf-height" min="30" max="260" step="0.1" class="field"></div>
+                                <div><label for="pf-weight" class="label">Weight (kg)</label><input type="number" id="pf-weight" min="1" max="400" step="0.1" class="field"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <h2>Medical information</h2>
+                            <p>Allergies remove matching medicines from symptom-check suggestions.</p>
+                        </div>
+                        <div class="panel settings-panel space-y-4">
+                            <div><label for="pf-allergies" class="label">Allergies</label><input type="text" id="pf-allergies" maxlength="1000" class="field" placeholder="e.g. penicillin, ibuprofen" aria-describedby="pf-allergies-hint"><p id="pf-allergies-hint" class="hint">Separate with commas.</p></div>
+                            <div><label for="pf-conditions" class="label">Existing conditions</label><input type="text" id="pf-conditions" maxlength="1000" class="field" placeholder="e.g. asthma, type 2 diabetes"></div>
+                            <div><label for="pf-notes" class="label">Notes for doctors</label><textarea id="pf-notes" rows="2" maxlength="2000" class="field"></textarea></div>
+                            <div class="flex justify-end"><button type="submit" class="btn btn-primary">Save profile</button></div>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <h2>Emergency contacts</h2>
+                        <p>The SOS button lets you call them or send your live location by SMS or WhatsApp.</p>
+                    </div>
+                    <div class="panel settings-panel">
+                        <div id="contacts-list" class="mb-4"></div>
+                        <form id="contact-form" onsubmit="addContact(event)" class="grid grid-cols-1 sm:grid-cols-[1fr_140px_160px_auto] gap-2 items-end">
+                            <div><label for="ct-name" class="label">Name</label><input type="text" id="ct-name" required maxlength="80" class="field"></div>
+                            <div><label for="ct-relation" class="label">Relation</label><input type="text" id="ct-relation" maxlength="40" class="field"></div>
+                            <div><label for="ct-phone" class="label">Phone</label><input type="tel" id="ct-phone" required maxlength="20" class="field"></div>
+                            <button type="submit" class="btn btn-secondary">Add</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <h2>Account</h2>
+                        <p>Password, signing out and removing your data.</p>
+                    </div>
+                    <div class="panel settings-panel flex flex-wrap gap-2">
+                        <button onclick="openChangePassword()" class="btn btn-secondary">Change password</button>
+                        <button onclick="logout()" class="btn btn-secondary">Log out</button>
+                        <button onclick="openDeleteAccount()" class="btn btn-secondary !text-[color:var(--negative)] sm:ml-auto">Delete account</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer no-print">
+        <div class="container-app">General health information only; it does not replace a doctor. In an emergency call <span class="emergency-number">112</span>.</div>
+    </footer>
+
+    <!-- Phone: bottom navigation -->
+    <nav class="bottomnav no-print" aria-label="Main">
+        <button onclick="switchTab('dashboard')" data-tab="dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg><span>Home</span></button>
+        <button onclick="switchTab('triage')" data-tab="triage"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span>Symptoms</span></button>
+        <button onclick="switchTab('tracker')" data-tab="tracker"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 20.5l10-10a4.95 4.95 0 10-7-7l-10 10a4.95 4.95 0 107 7zM8.5 8.5l7 7"/></svg><span>Medicines</span></button>
+        <button onclick="switchTab('vitals')" data-tab="vitals"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span>Vitals</span></button>
+        <button onclick="openMoreSheet()" data-tab="more"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>More</span></button>
+    </nav>
+
+    <!-- Toasts -->
+    <div id="toast-stack" class="toast-stack no-print" aria-live="polite"></div>
+
+    <!-- Small modal (alert replacement) -->
+    <div id="custom-modal" class="modal-wrap hidden opacity-0 no-print" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-box max-w-sm scale-95" id="modal-content-box">
+            <div class="p-6 text-center">
+                <div class="modal-icon" id="modal-icon"></div>
+                <h3 class="text-[18px] font-semibold mb-2" id="modal-title">Notice</h3>
+                <p class="text-[14px] muted mb-6" id="modal-message"></p>
+                <button onclick="closeModal()" class="btn btn-primary w-full">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel modal / phone sheet -->
+    <div id="panel-modal" class="modal-wrap sheet-on-phone hidden opacity-0" role="dialog" aria-modal="true" aria-labelledby="panel-title">
+        <div class="modal-box max-w-lg scale-95" id="panel-box">
+            <div class="flex justify-between items-center px-6 pt-5 pb-3 no-print">
+                <h3 class="text-[18px] font-semibold" id="panel-title"></h3>
+                <button onclick="closePanel()" class="btn-icon btn" aria-label="Close">
+                    <svg viewBox="0 0 20 20" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.3 4.3a1 1 0 011.4 0L10 8.6l4.3-4.3a1 1 0 111.4 1.4L11.4 10l4.3 4.3a1 1 0 01-1.4 1.4L10 11.4l-4.3 4.3a1 1 0 01-1.4-1.4L8.6 10 4.3 5.7a1 1 0 010-1.4z" clip-rule="evenodd"/></svg>
+                </button>
+            </div>
+            <div class="px-6 pb-6" id="panel-body"></div>
+        </div>
+    </div>
+
+    <script src="/js/ui.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/triage.js"></script>
+    <script src="/js/tracker.js"></script>
+    <script src="/js/vitals.js"></script>
+    <script src="/js/appointments.js"></script>
+    <script src="/js/locator.js"></script>
+    <script src="/js/info.js"></script>
+    <script src="/js/profile.js"></script>
+    <script src="/js/reminders.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
