@@ -1,0 +1,211 @@
+// First-aid guides shown in the Medical Info tab. General guidance only.
+const FIRST_AID = [
+  {
+    id: 'cpr', title: 'Basic CPR (Adults)', category: 'Emergency', color: 'red', icon: 'heart', call_emergency: true,
+    tags: ['cardiac arrest', 'not breathing', 'unresponsive'],
+    steps: [
+      'Ensure the scene is safe.',
+      'Check for responsiveness (tap and shout).',
+      'Call emergency services immediately, or ask someone to call and find an AED.',
+      'Push hard and fast in the center of the chest (100–120 compressions/min, 5–6 cm / about 2 inches deep).',
+      'If trained, give 2 rescue breaths after every 30 compressions. Otherwise keep doing compressions only.',
+      'Continue until help arrives or the person starts breathing normally.',
+    ],
+  },
+  {
+    id: 'heart_attack', title: 'Heart Attack Signs', category: 'Emergency', color: 'red', icon: 'pulse', call_emergency: true,
+    tags: ['chest pain', 'cardiac'],
+    steps: [
+      'Signs: chest pain or pressure, pain spreading to the arm, jaw, neck or back, sweating, breathlessness, nausea.',
+      'Call emergency services immediately.',
+      'Help the person sit down and rest in a comfortable position. Loosen tight clothing.',
+      'If they are not allergic, the emergency operator may advise them to chew an aspirin.',
+      'Stay with them and be ready to start CPR if they become unresponsive.',
+    ],
+    dont: ['Do not let them walk around or drive themselves to hospital.'],
+  },
+  {
+    id: 'stroke', title: 'Stroke Signs (F.A.S.T.)', category: 'Emergency', color: 'purple', icon: 'bolt', call_emergency: true,
+    tags: ['face drooping', 'slurred speech', 'paralysis'],
+    steps: [
+      'F – Face: Ask them to smile. Does one side of the face droop?',
+      'A – Arms: Ask them to raise both arms. Does one drift downward?',
+      'S – Speech: Ask them to repeat a simple phrase. Is speech slurred?',
+      'T – Time: If you observe any of these signs, call emergency immediately. Note the time symptoms started.',
+    ],
+    dont: ['Do not give food, drink or medicine.'],
+  },
+  {
+    id: 'choking', title: 'Choking (Heimlich Maneuver)', category: 'Emergency', color: 'blue', icon: 'choke', call_emergency: true,
+    tags: ['airway', 'cannot breathe'],
+    steps: [
+      'Ask "Are you choking?" If they can’t cough, speak, or breathe:',
+      'Give up to 5 firm back blows between the shoulder blades.',
+      'Stand behind them and wrap your arms around their waist.',
+      'Make a fist with one hand, place thumb side just above their navel.',
+      'Grasp your fist with the other hand and give quick, upward thrusts until the object is expelled.',
+      'If they become unresponsive, call emergency services and start CPR.',
+    ],
+  },
+  {
+    id: 'bleeding', title: 'Severe Bleeding', category: 'Injuries', color: 'green', icon: 'alert', call_emergency: true,
+    tags: ['wound', 'blood', 'cut'],
+    steps: [
+      'Ensure safety and put on gloves if available.',
+      'Apply direct, firm pressure to the wound with a clean cloth or sterile dressing.',
+      'Maintain pressure continuously. Don’t lift the dressing to look.',
+      'If blood soaks through, add more layers on top.',
+      'Keep the injured area elevated if possible. Call emergency.',
+    ],
+  },
+  {
+    id: 'burns', title: 'Burns First Aid', category: 'Injuries', color: 'orange', icon: 'fire',
+    tags: ['scald', 'fire', 'hot water'],
+    steps: [
+      'Remove person from the heat source.',
+      'Cool the burn with cool (not ice cold) running water for 20 minutes.',
+      'Remove tight items (rings, belts) before swelling starts.',
+      'Apply a loose sterile dressing or cling film.',
+      'Seek medical care for large burns, or burns on the face, hands, feet or genitals.',
+    ],
+    dont: ['Do NOT apply ice, butter, toothpaste, oil or ointments.', 'Do not burst blisters.'],
+  },
+  {
+    id: 'seizure', title: 'Seizure', category: 'Emergency', color: 'indigo', icon: 'bolt',
+    tags: ['fits', 'convulsion', 'epilepsy'],
+    steps: [
+      'Note the time the seizure starts.',
+      'Move hard or sharp objects away and cushion their head.',
+      'Loosen anything tight around the neck.',
+      'When the shaking stops, turn them onto their side (recovery position) and stay with them.',
+      'Call emergency if it lasts over 5 minutes, it is their first seizure, they are injured, or they don’t wake up.',
+    ],
+    dont: ['Do not hold them down.', 'Do not put anything in their mouth.'],
+  },
+  {
+    id: 'fainting', title: 'Fainting', category: 'Common', color: 'sky', icon: 'faint',
+    tags: ['passed out', 'collapsed', 'dizzy'],
+    steps: [
+      'Lay the person flat on their back.',
+      'Raise their legs about 30 cm (on a bag or chair) to help blood flow to the brain.',
+      'Loosen tight clothing and make sure they have fresh air.',
+      'Check that they are breathing.',
+      'If they don’t wake up within a minute, call emergency services.',
+    ],
+  },
+  {
+    id: 'heat_stroke', title: 'Heat Stroke', category: 'Emergency', color: 'amber', icon: 'sun', call_emergency: true,
+    tags: ['sunstroke', 'heat', 'summer'],
+    steps: [
+      'Signs: very high body temperature, hot dry or red skin, confusion, headache, fainting.',
+      'Call emergency services.',
+      'Move the person to a cool, shaded place and remove extra clothing.',
+      'Cool them quickly: wet the skin with cool water and fan them; place cold packs at the neck, armpits and groin.',
+      'Give sips of water only if they are fully awake and able to swallow.',
+    ],
+  },
+  {
+    id: 'snakebite', title: 'Snakebite', category: 'Emergency', color: 'lime', icon: 'alert', call_emergency: true,
+    tags: ['snake', 'venom', 'bite'],
+    steps: [
+      'Keep the person calm and still - movement spreads venom faster.',
+      'Keep the bitten limb still and at or below heart level.',
+      'Remove rings, watches and tight clothing near the bite.',
+      'Get to the nearest hospital with anti-snake venom as fast as possible.',
+      'Try to remember the snake’s appearance, but don’t try to catch it.',
+    ],
+    dont: ['Do not cut the wound, suck out venom, or tie a tight tourniquet.', 'Do not apply ice or herbal remedies.'],
+  },
+  {
+    id: 'dog_bite', title: 'Dog / Animal Bite', category: 'Injuries', color: 'yellow', icon: 'alert',
+    tags: ['rabies', 'dog', 'cat', 'monkey', 'scratch'],
+    steps: [
+      'Wash the wound immediately with soap and running water for 15 minutes.',
+      'Apply an antiseptic (such as povidone-iodine).',
+      'Cover loosely with a clean dressing.',
+      'See a doctor the same day - you may need the anti-rabies vaccine and a tetanus shot, even for a small scratch.',
+    ],
+    dont: ['Do not ignore a bite from a stray or unvaccinated animal.'],
+  },
+  {
+    id: 'nosebleed', title: 'Nosebleed', category: 'Common', color: 'rose', icon: 'drop',
+    tags: ['nose', 'bleeding'],
+    steps: [
+      'Sit up and lean slightly forward (not back).',
+      'Pinch the soft part of the nose firmly for 10–15 minutes and breathe through the mouth.',
+      'Apply a cold compress on the bridge of the nose.',
+      'Seek medical help if bleeding lasts more than 20 minutes or follows a head injury.',
+    ],
+    dont: ['Do not tilt the head back - blood can run into the throat.'],
+  },
+  {
+    id: 'fracture', title: 'Broken Bone (Fracture)', category: 'Injuries', color: 'stone', icon: 'bone',
+    tags: ['fracture', 'broken arm', 'broken leg'],
+    steps: [
+      'Keep the injured part still in the position you found it.',
+      'Support it with a splint, sling or rolled-up towel.',
+      'Apply a wrapped ice pack to reduce swelling.',
+      'If bone is visible, cover the wound with a clean dressing - don’t push the bone back.',
+      'Get medical help. Call emergency for injuries to the neck, back, hip or thigh.',
+    ],
+  },
+  {
+    id: 'poisoning', title: 'Poisoning', category: 'Emergency', color: 'fuchsia', icon: 'flask', call_emergency: true,
+    tags: ['swallowed', 'chemical', 'overdose'],
+    steps: [
+      'Call emergency services or a poison centre straight away.',
+      'Find out what was taken, how much and when. Keep the container.',
+      'If the poison is on the skin, remove contaminated clothing and rinse the skin with water for 15–20 minutes.',
+      'If the person is unconscious but breathing, place them in the recovery position.',
+    ],
+    dont: ['Do not make them vomit unless a medical professional tells you to.'],
+  },
+  {
+    id: 'asthma', title: 'Asthma Attack', category: 'Emergency', color: 'cyan', icon: 'lungs',
+    tags: ['wheezing', 'inhaler', 'breathing'],
+    steps: [
+      'Help the person sit upright - don’t let them lie down.',
+      'Help them use their reliever (usually blue) inhaler as their asthma action plan directs.',
+      'Stay calm and encourage slow, steady breaths.',
+      'Call emergency if they don’t improve, can’t speak in full sentences, or their lips turn blue.',
+    ],
+  },
+  {
+    id: 'low_sugar', title: 'Low Blood Sugar (Hypoglycaemia)', category: 'Common', color: 'pink', icon: 'candy',
+    tags: ['diabetes', 'hypo', 'sweating', 'shaky'],
+    steps: [
+      'Signs: shaking, sweating, hunger, confusion, irritability, pale skin.',
+      'If they are awake and can swallow, give fast sugar: glucose tablets, fruit juice, a regular soft drink, or a spoon of sugar.',
+      'Recheck after 15 minutes; repeat if still low.',
+      'Once better, give a snack with carbohydrate (like biscuits or a sandwich).',
+      'If they are unconscious, don’t give anything by mouth - call emergency services.',
+    ],
+  },
+  {
+    id: 'eye_chemical', title: 'Chemical in the Eye', category: 'Injuries', color: 'teal', icon: 'eye',
+    tags: ['eye', 'splash'],
+    steps: [
+      'Rinse the eye with clean running water for at least 15–20 minutes, holding the eyelids open.',
+      'Remove contact lenses if they come out easily.',
+      'Seek medical care urgently and take the chemical container with you.',
+    ],
+    dont: ['Do not rub the eye.'],
+  },
+  {
+    id: 'kit', title: 'Essential First Aid Kit', category: 'Preparedness', color: 'yellow', icon: 'kit',
+    tags: ['supplies', 'home kit'],
+    steps: [
+      'Adhesive bandages (assorted sizes)',
+      'Sterile gauze pads, crepe bandage and medical tape',
+      'Antiseptic solution / wipes',
+      'Antibiotic ointment',
+      'Tweezers and scissors',
+      'Digital thermometer',
+      'Disposable gloves',
+      'ORS sachets and a cold pack',
+      'A list of emergency numbers and family medical details',
+    ],
+  },
+];
+
+module.exports = { FIRST_AID };
